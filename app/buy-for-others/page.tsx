@@ -235,6 +235,7 @@ export default function BuyForOthers() {
                   )}
 
                   <Button
+                    type="button"
                     onClick={handlePurchase}
                     className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 transform transition-all duration-200 hover:scale-[1.02] shadow-lg"
                     loading={purchasing}
