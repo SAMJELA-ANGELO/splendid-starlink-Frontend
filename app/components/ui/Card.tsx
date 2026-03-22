@@ -1,0 +1,67 @@
+import { clsx } from 'clsx';
+import { HTMLAttributes, forwardRef } from 'react';
+
+interface CardProps extends HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+}
+
+const Card = forwardRef<HTMLDivElement, CardProps>(({ className, children, ...props }, ref) => {
+  return (
+    <div
+      ref={ref}
+      className={clsx(
+        'bg-white rounded-lg shadow-md border border-gray-200',
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+});
+
+Card.displayName = 'Card';
+
+export const CardHeader = forwardRef<HTMLDivElement, CardProps>(({ className, children, ...props }, ref) => {
+  return (
+    <div
+      ref={ref}
+      className={clsx('px-6 py-4 border-b border-gray-200', className)}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+});
+
+CardHeader.displayName = 'CardHeader';
+
+export const CardContent = forwardRef<HTMLDivElement, CardProps>(({ className, children, ...props }, ref) => {
+  return (
+    <div
+      ref={ref}
+      className={clsx('px-6 py-4', className)}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+});
+
+CardContent.displayName = 'CardContent';
+
+export const CardFooter = forwardRef<HTMLDivElement, CardProps>(({ className, children, ...props }, ref) => {
+  return (
+    <div
+      ref={ref}
+      className={clsx('px-6 py-4 border-t border-gray-200', className)}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+});
+
+CardFooter.displayName = 'CardFooter';
+
+export default Card;
