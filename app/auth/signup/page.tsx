@@ -72,13 +72,15 @@ export default function Signup() {
           createdAt: new Date().toISOString(),
         }));
         
+        // Note: signup doesn't return a token, user needs to login
+        // So we don't set a cookie here - user will login and get a token
         showSuccess('Account created successfully! Redirecting to bundles...', 6000);
         
         // Clear any stored bundle data since we're starting fresh
         sessionStorage.removeItem('selectedBundle');
         sessionStorage.removeItem('redirectPath');
         
-        // Always redirect to bundles after signup
+        // Redirect to bundles after signup (no token yet, but buy page allows browsing)
         setTimeout(() => router.push('/buy'), 2000);
       } else {
         const errorMsg = response?.message || 'Signup failed. Please try again.';

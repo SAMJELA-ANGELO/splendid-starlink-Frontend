@@ -55,6 +55,8 @@ export default function Login() {
         // Backend returns { token: string, user: ... }, store token
         const token = response.data.token;
         localStorage.setItem('token', token);
+        // Set token in cookie so middleware can see it
+        document.cookie = `token=${token}; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 days
         
         // Decode JWT to get user info (simple decode, not secure validation)
         try {

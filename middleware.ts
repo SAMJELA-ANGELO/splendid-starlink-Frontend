@@ -5,14 +5,14 @@ import type { NextRequest } from 'next/server';
 const publicRoutes = [
   '/auth/login',
   '/auth/signup',
+  '/buy',           // Allow browsing bundles without login
+  '/buy-for-others', // Allow buying for others without login
   '/',
 ];
 
 // Routes that require authentication
 const protectedRoutes = [
   '/dashboard',
-  '/buy',
-  '/buy-for-others',
   '/history',
   '/payment',
   '/status',
