@@ -88,8 +88,22 @@ export default function Login() {
       } else {
         showError(response.message || 'Login failed');
       }
-    } catch (error) {
-      showError('Network error. Please try again.');
+    } catch (error: any) {
+      // Check if it's an authentication error (401 Unauthorized)
+      const status = error?.response?.status;
+      const errorMessage = error?.response?.data?.message || error?.message;
+
+      if (status === 401 || errorMessage?.toLowerCase().includes('invalid')) {
+        showError('Your username or password is not correct');
+      } else if (status >= 500) {
+        showError('Server error. Please try again later.');
+      } else if (error?.code === 'ECONNREFUSED') {
+        showError('Cannot connect to server. Please check your connection.');
+      } else {
+        showError('Login failed. Please try again.');
+      }
+      
+      console.error('Login error:', error);
     } finally {
       setLoading(false);
     }

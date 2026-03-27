@@ -199,7 +199,7 @@ export default function BuyBundle() {
             <p className="text-sm sm:text-base text-gray-600">Click on any plan to select and purchase</p>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 lg:gap-8 px-2 sm:px-0">
             {availableBundles.map((bundle, index) => (
               <div
                 key={bundle.id}
@@ -207,7 +207,7 @@ export default function BuyBundle() {
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <Card
-                  className={`relative overflow-hidden cursor-pointer transition-all duration-300 ${
+                  className={`relative overflow-hidden cursor-pointer transition-all duration-300 h-full ${
                     selectedBundle?.id === bundle.id
                       ? 'ring-4 ring-amber-600 border-amber-600 shadow-2xl transform scale-105'
                       : 'hover:shadow-xl border-gray-200'

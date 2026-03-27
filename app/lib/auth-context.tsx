@@ -65,7 +65,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(null);
       
       const response = await auth.login({ username, password });
-      const token = response.data?.token;
+      
+      // response is ApiResponse<AuthResponse>
+      // Structure: { success: true, data: { user, token } }
+      const token = response?.data?.token;
+      const userData = response?.data?.user;
       
       if (!token) {
         throw new Error('No token received from server');
@@ -73,10 +77,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Store token in both localStorage and cookie
       localStorage.setItem('token', token);
+      if (userData) {
+        localStorage.setItem('user', JSON.stringify(userData));
+      }
       document.cookie = `token=${token}; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 days
       
-      // Fetch user data
-      await checkAuth();
+      // Set user data and authenticated state
+      setUser(userData || null);
+      
+      // Navigate to dashboard
       router.push('/dashboard');
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || err.message || 'Login failed';

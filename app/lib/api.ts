@@ -58,7 +58,7 @@ export const bundles = {
 // Purchase endpoints (using /payments backend routes)
 export const purchases = {
   getUserPurchases: async (): Promise<ApiResponse<Purchase[]>> => {
-    const response = await api.get('/purchases/user');
+    const response = await api.get('/payments/users');
     return response.data;
   },
 
