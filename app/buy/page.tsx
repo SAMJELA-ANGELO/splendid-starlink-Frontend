@@ -45,10 +45,11 @@ export default function BuyBundle() {
     // Check authentication when user tries to select a bundle
     const token = localStorage.getItem('token');
     if (!token) {
-      // Store the selected bundle and redirect to signup
+      // Store the selected bundle and redirect to login
+      // User may have just signed up and needs to log in, or needs to create account
       sessionStorage.setItem('selectedBundle', JSON.stringify(bundle));
       sessionStorage.setItem('redirectPath', '/buy');
-      router.push('/auth/signup');
+      router.push('/auth/login');
       return;
     }
     

@@ -1,27 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Button from '../components/ui/Button';
 import Card, { CardHeader, CardContent } from '../components/ui/Card';
-import { auth, sessions, purchases } from '../lib/api';
+import ProtectedRoute from '../components/ProtectedRoute';
+import { useAuth } from '../lib/auth-context';
+import { sessions, purchases } from '../lib/api';
 import { User, Session, Purchase } from '../lib/types';
 
-export default function Dashboard() {
-  const [user, setUser] = useState<User | null>(null);
+function DashboardContent() {
+  const { user: authUser, logout } = useAuth();
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [recentPurchases, setRecentPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/auth/login');
-      return;
-    }
-
     fetchUserData();
     const interval = setInterval(fetchSessionData, 30000); // Update every 30 seconds
     return () => clearInterval(interval);
@@ -29,15 +23,10 @@ export default function Dashboard() {
 
   const fetchUserData = async () => {
     try {
-      const [userResponse, sessionResponse, purchasesResponse] = await Promise.all([
-        auth.me(),
+      const [sessionResponse, purchasesResponse] = await Promise.all([
         sessions.getCurrent(),
         purchases.getUserPurchases(),
       ]);
-
-      if (userResponse.success && userResponse.data) {
-        setUser(userResponse.data);
-      }
 
       if (sessionResponse.success && sessionResponse.data) {
         setCurrentSession(sessionResponse.data);
@@ -65,14 +54,7 @@ export default function Dashboard() {
   };
 
   const handleLogout = async () => {
-    try {
-      await auth.logout();
-    } catch (error) {
-      // Continue with logout even if API call fails
-    }
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    router.push('/auth/login');
+    await logout();
   };
 
   const formatDuration = (minutes: number) => {
@@ -128,7 +110,7 @@ export default function Dashboard() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 sm:py-6 space-y-4 sm:space-y-0">
             <div className="flex-1">
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-sm sm:text-base text-gray-600">Welcome back, {user?.username}</p>
+              <p className="text-sm sm:text-base text-gray-600">Welcome back, {authUser?.username}</p>
             </div>
             <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
               <Link href="/buy" className="w-full sm:w-auto">
@@ -226,30 +208,30 @@ export default function Dashboard() {
                 <div className="space-y-3">
                   <div>
                     <p className="text-sm text-gray-600">Username</p>
-                    <p className="font-medium">{user?.username}</p>
+                    <p className="font-medium">{authUser?.username}</p>
                   </div>
-                  {user?.email && (
+                  {authUser?.email && (
                     <div>
                       <p className="text-sm text-gray-600">Email</p>
-                      <p className="font-medium">{user.email}</p>
+                      <p className="font-medium">{authUser.email}</p>
                     </div>
                   )}
-                  {user?.phoneNumber && (
+                  {authUser?.phoneNumber && (
                     <div>
                       <p className="text-sm text-gray-600">Phone</p>
-                      <p className="font-medium">{user.phoneNumber}</p>
+                      <p className="font-medium">{authUser.phoneNumber}</p>
                     </div>
                   )}
                   <div>
                     <p className="text-sm text-gray-600">Member Since</p>
-                    <p className="font-medium">{formatDate(user?.createdAt || '')}</p>
+                    <p className="font-medium">{formatDate(authUser?.createdAt || '')}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Account Status</p>
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      user?.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      authUser?.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                     }`}>
-                      {user?.isActive ? 'Active' : 'Inactive'}
+                      {authUser?.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
                 </div>
@@ -337,5 +319,13 @@ export default function Dashboard() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <ProtectedRoute>
+      <DashboardContent />
+    </ProtectedRoute>
   );
 }

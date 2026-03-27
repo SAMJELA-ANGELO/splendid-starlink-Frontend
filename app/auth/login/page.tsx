@@ -52,26 +52,31 @@ export default function Login() {
       const response = await auth.login(formData);
       
       if (response.success && response.data) {
-        console.log('Login successful, response data:', response.data);
-        
-        // Store token from API response (new format)
+        // Backend returns { token: string, user: ... }, store token
         const token = response.data.token;
-        console.log('Storing token:', token);
         localStorage.setItem('token', token);
         
-        // Store user data from API response
-        const user = response.data.user || {
-          id: 'unknown',
-          username: formData.username,
-          isActive: true,
-          createdAt: new Date().toISOString(),
-        };
-        console.log('Storing user:', user);
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        // Verify token was stored
-        const storedToken = localStorage.getItem('token');
-        console.log('Token stored successfully:', !!storedToken);
+        // Decode JWT to get user info (simple decode, not secure validation)
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          const user = {
+            id: payload.sub,
+            username: payload.username,
+            isActive: true,
+            createdAt: new Date().toISOString(),
+          };
+          localStorage.setItem('user', JSON.stringify(user));
+        } catch (decodeError) {
+          console.error('Failed to decode JWT:', decodeError);
+          // Fallback: create basic user object
+          const user = {
+            id: 'unknown',
+            username: formData.username,
+            isActive: true,
+            createdAt: new Date().toISOString(),
+          };
+          localStorage.setItem('user', JSON.stringify(user));
+        }
         
         // Check if there's a redirect intent from bundles page
         const redirectPath = sessionStorage.getItem('redirectPath') || '/dashboard';
@@ -80,36 +85,10 @@ export default function Login() {
         showSuccess('Login successful! Redirecting...');
         setTimeout(() => router.push(redirectPath), 1000);
       } else {
-        // Handle different error formats
-        const errorMessage = response.message || 'Login failed';
-        showError(errorMessage);
+        showError(response.message || 'Login failed');
       }
-    } catch (error: any) {
-      console.error('Login error:', error);
-      
-      // Handle different error types
-      if (error.response) {
-        const status = error.response.status;
-        const errorData = error.response.data;
-        
-        switch (status) {
-          case 400:
-            showError(errorData?.message || 'Please provide username and password');
-            break;
-          case 401:
-            showError('Invalid username or password');
-            break;
-          case 500:
-            showError('Server error. Please try again later');
-            break;
-          default:
-            showError(errorData?.message || 'Login failed. Please try again.');
-        }
-      } else if (error.request) {
-        showError('Network error. Please check your connection');
-      } else {
-        showError('Login failed. Please try again.');
-      }
+    } catch (error) {
+      showError('Network error. Please try again.');
     } finally {
       setLoading(false);
     }

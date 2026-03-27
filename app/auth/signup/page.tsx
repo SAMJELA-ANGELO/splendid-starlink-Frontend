@@ -62,63 +62,33 @@ export default function Signup() {
       const { confirmPassword, ...signupData } = formData;
       const response = await auth.signup(signupData);
       
-      if (response.success) {
-        // Backend register returns { success: true, message: string, user: { id: string, username: string } }
-        // No token returned, user needs to login after signup
-        const user = (response as any).user || (response as any).data?.user;
-        if (user) {
-          localStorage.setItem('user', JSON.stringify({
-            id: user.id,
-            username: user.username,
-            isActive: user.isActive || true,
-            createdAt: new Date().toISOString(),
-          }));
-        }
+      // Check if response has success field
+      if (response?.success === true && response?.data?.user) {
+        // Successfully created user
+        localStorage.setItem('user', JSON.stringify({
+          id: response.data.user.id,
+          username: response.data.user.username,
+          isActive: true,
+          createdAt: new Date().toISOString(),
+        }));
         
-        showSuccess('Account created successfully! Please sign in to continue.');
+        showSuccess('Account created successfully! Redirecting to bundles...', 6000);
         
-        // Check if there's a selected bundle from before signup
-        const selectedBundle = sessionStorage.getItem('selectedBundle');
-        if (selectedBundle) {
-          // User selected a bundle before signup, redirect to login with intent to go to buy page
-          sessionStorage.setItem('redirectPath', '/buy');
-          sessionStorage.removeItem('selectedBundle'); // Clean up
-          setTimeout(() => router.push('/auth/login'), 1500);
-        } else {
-          // Normal signup flow, redirect to login
-          setTimeout(() => router.push('/auth/login'), 1500);
-        }
+        // Clear any stored bundle data since we're starting fresh
+        sessionStorage.removeItem('selectedBundle');
+        sessionStorage.removeItem('redirectPath');
+        
+        // Always redirect to bundles after signup
+        setTimeout(() => router.push('/buy'), 2000);
       } else {
-        // Handle different error formats
-        const errorMessage = response.message || 'Signup failed';
-        showError(errorMessage);
+        const errorMsg = response?.message || 'Signup failed. Please try again.';
+        console.error('Signup error:', { response, errorMsg });
+        showError(errorMsg);
       }
     } catch (error: any) {
-      console.error('Signup error:', error);
-      
-      // Handle different error types
-      if (error.response) {
-        const status = error.response.status;
-        const errorData = error.response.data;
-        
-        switch (status) {
-          case 400:
-            showError(errorData?.message || 'Invalid input data');
-            break;
-          case 409:
-            showError('Username already exists. Please choose a different username.');
-            break;
-          case 500:
-            showError('Server error. Please try again later');
-            break;
-          default:
-            showError(errorData?.message || 'Signup failed. Please try again.');
-        }
-      } else if (error.request) {
-        showError('Network error. Please check your connection');
-      } else {
-        showError('Signup failed. Please try again.');
-      }
+      console.error('Signup exception:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || 'Network error. Please try again.';
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }

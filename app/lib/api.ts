@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { User, Bundle, Purchase, Session, AuthResponse, ApiResponse } from './types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://splendidstarlink.onrender.com/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -13,7 +13,6 @@ const api = axios.create({
 // Add auth token to requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  console.log('API Request:', config.method?.toUpperCase(), config.url, 'Token present:', !!token);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -28,98 +27,8 @@ export const auth = {
   },
 
   login: async (credentials: { username: string; password: string }): Promise<ApiResponse<AuthResponse>> => {
-    try {
-      const response = await api.post('/auth/login', credentials);
-      console.log('Login API response:', response);
-      console.log('Login response data:', response.data);
-      
-      // Handle new response format from backend
-      if (response.data.success && response.data.data) {
-        // Successful login - new format with success flag
-        console.log('Login successful - new format detected');
-        return { 
-          success: true, 
-          data: {
-            token: response.data.data.access_token,
-            user: response.data.user || {
-              id: response.data.user?.id || 'unknown',
-              username: response.data.user?.username || credentials.username,
-              isActive: response.data.user?.isActive || true,
-              createdAt: new Date().toISOString()
-            }
-          }
-        };
-      } else if (response.data.access_token) {
-        // Fallback - old format (direct token)
-        console.log('Login successful - old format detected');
-        return { 
-          success: true, 
-          data: {
-            token: response.data.access_token,
-            user: response.data.user || {
-              id: response.data.id || response.data.sub || 'unknown',
-              username: credentials.username,
-              isActive: true,
-              createdAt: new Date().toISOString()
-            }
-          }
-        };
-      } else if (response.data.success === false || response.data.message) {
-        // Failed login - backend returns success: false or error message
-        console.log('Login failed - error message found');
-        return { 
-          success: false, 
-          message: response.data.message || 'Login failed'
-        };
-      } else {
-        // Unexpected response format
-        console.log('Login failed - unexpected response format');
-        return { 
-          success: false, 
-          message: 'Unexpected response from server'
-        };
-      }
-    } catch (error: any) {
-      console.error('Login API error:', error);
-      
-      // Handle HTTP errors
-      if (error.response) {
-        const status = error.response.status;
-        const errorData = error.response.data;
-        
-        if (status === 401) {
-          return { 
-            success: false, 
-            message: 'Invalid username or password'
-          };
-        } else if (status === 400) {
-          return { 
-            success: false, 
-            message: errorData?.message || 'Invalid request'
-          };
-        } else if (status === 500) {
-          return { 
-            success: false, 
-            message: 'Server error. Please try again later'
-          };
-        } else {
-          return { 
-            success: false, 
-            message: errorData?.message || 'Login failed'
-          };
-        }
-      } else if (error.request) {
-        return { 
-          success: false, 
-          message: 'Network error. Please check your connection'
-        };
-      } else {
-        return { 
-          success: false, 
-          message: 'Login failed. Please try again.'
-        };
-      }
-    }
+    const response = await api.post('/auth/login', credentials);
+    return response.data;
   },
 
   logout: async (): Promise<ApiResponse<null>> => {
@@ -128,65 +37,16 @@ export const auth = {
   },
 
   me: async (): Promise<ApiResponse<User>> => {
-    try {
-      const response = await api.get('/auth/me');
-      
-      // Handle different response formats from backend
-      if (response.data.user) {
-        return { success: true, data: response.data.user };
-      } else if (response.data.id || response.data.username) {
-        // Response contains user data directly
-        return { success: true, data: response.data };
-      } else if (Array.isArray(response.data) && response.data.length > 0) {
-        // Response is array, take first element
-        return { success: true, data: response.data[0] };
-      }
-      
-      return { success: false, message: 'No user data found' };
-    } catch (error) {
-      throw error;
-    }
+    const response = await api.get('/auth/me');
+    return response.data;
   },
 };
 
 // Bundle endpoints (using /plans backend route)
 export const bundles = {
   getAll: async (): Promise<ApiResponse<Bundle[]>> => {
-    try {
-      const response = await api.get('/plans');
-      
-      // Backend returns data directly as array, not wrapped in response object
-      if (Array.isArray(response.data)) {
-        const transformedBundles = response.data.map((bundle: any) => ({
-          id: bundle._id || bundle.id,
-          name: bundle.name,
-          price: bundle.price,
-          duration: bundle.duration * 60, // Backend returns hours, convert to minutes
-          dataLimit: bundle.dataLimit || undefined,
-          description: bundle.description || `Get ${bundle.duration} hours of high-speed internet access`,
-          isActive: bundle.isActive !== false
-        }));
-        return { success: true, data: transformedBundles };
-      }
-      
-      // Fallback: Handle wrapped response format
-      if (response.data.success && response.data.data) {
-        const transformedBundles = response.data.data.map((bundle: any) => ({
-          id: bundle._id || bundle.id,
-          name: bundle.name,
-          price: bundle.price,
-          duration: bundle.duration * 60, // Backend returns hours, convert to minutes
-          dataLimit: bundle.dataLimit || undefined,
-          description: bundle.description || `Get ${bundle.duration} hours of high-speed internet access`,
-          isActive: bundle.isActive !== false
-        }));
-        return { success: true, data: transformedBundles };
-      }
-      
-      return { success: false, message: 'Unexpected response format' };
-    } catch (error) {
-      throw error;
-    }
+    const response = await api.get('/plans');
+    return response.data;
   },
 
   purchase: async (planId: string, paymentData: { phone: string; name?: string }): Promise<ApiResponse<Purchase>> => {
@@ -198,29 +58,16 @@ export const bundles = {
 // Purchase endpoints (using /payments backend routes)
 export const purchases = {
   getUserPurchases: async (): Promise<ApiResponse<Purchase[]>> => {
-    try {
-      const response = await api.get('/payments/user');
-      
-      // Handle different response formats from backend
-      if (Array.isArray(response.data)) {
-        return { success: true, data: response.data };
-      } else if (response.data.purchases && Array.isArray(response.data.purchases)) {
-        return { success: true, data: response.data.purchases };
-      } else if (response.data.success && response.data.data) {
-        return { success: true, data: response.data.data };
-      }
-      
-      return { success: false, message: 'No purchase data found' };
-    } catch (error) {
-      throw error;
-    }
+    const response = await api.get('/purchases/user');
+    return response.data;
   },
 
   verifyPayment: async (transactionId: string): Promise<ApiResponse<Purchase>> => {
     const response = await api.get(`/payments/status/${transactionId}`);
+    const data = response.data;
     // Transform Fapshi response to Purchase format
-    if (response.data.success && response.data.data) {
-      const fapshiData = response.data.data;
+    if (data.success && data.data) {
+      const fapshiData = data.data;
       const purchase: Purchase = {
         id: fapshiData.transId || transactionId,
         userId: '', // Not available in status response
@@ -234,15 +81,10 @@ export const purchases = {
       };
       return { success: true, data: purchase };
     }
-    return response.data;
+    return data;
   },
 
-  buyForOthers: async (data: {
-    targetUsername: string;
-    targetPassword: string;
-    phoneNumber: string;
-    planId: string;
-  }): Promise<ApiResponse<any>> => {
+  buyForOthers: async (data: { targetUsername: string; targetPassword: string; phoneNumber: string; planId: string }): Promise<ApiResponse<Purchase>> => {
     const response = await api.post('/payments/buy-for-others', data);
     return response.data;
   },
@@ -251,24 +93,8 @@ export const purchases = {
 // Session endpoints
 export const sessions = {
   getCurrent: async (): Promise<ApiResponse<Session>> => {
-    try {
-      const response = await api.get('/sessions/current');
-      
-      // Handle different response formats from backend
-      if (response.data.session) {
-        return { success: true, data: response.data.session };
-      } else if (response.data.id || response.data.startTime) {
-        // Response contains session data directly
-        return { success: true, data: response.data };
-      } else if (Array.isArray(response.data) && response.data.length > 0) {
-        // Response is array, take first element
-        return { success: true, data: response.data[0] };
-      }
-      
-      return { success: false, message: 'No session data found' };
-    } catch (error) {
-      throw error;
-    }
+    const response = await api.get('/sessions/current');
+    return response.data;
   },
 
   getStatus: async (): Promise<ApiResponse<{ isActive: boolean; remainingTime?: number }>> => {
