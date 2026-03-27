@@ -80,12 +80,11 @@ export default function Login() {
           localStorage.setItem('user', JSON.stringify(user));
         }
         
-        // Check if there's a redirect intent from bundles page
-        const redirectPath = sessionStorage.getItem('redirectPath') || '/dashboard';
-        sessionStorage.removeItem('redirectPath'); // Clear the redirect path
-        
         showSuccess('Login successful! Redirecting...');
-        setTimeout(() => router.push(redirectPath), 1000);
+        // Use window.location for a full page reload to ensure middleware gets fresh cookie
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 500);
       } else {
         showError(response.message || 'Login failed');
       }

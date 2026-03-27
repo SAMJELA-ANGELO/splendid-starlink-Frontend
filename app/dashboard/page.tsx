@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Button from '../components/ui/Button';
 import Card, { CardHeader, CardContent } from '../components/ui/Card';
-import ProtectedRoute from '../components/ProtectedRoute';
 import { useAuth } from '../lib/auth-context';
 import { sessions, purchases } from '../lib/api';
 import { User, Session, Purchase } from '../lib/types';
@@ -323,9 +322,5 @@ function DashboardContent() {
 }
 
 export default function Dashboard() {
-  return (
-    <ProtectedRoute>
-      <DashboardContent />
-    </ProtectedRoute>
-  );
+  return <DashboardContent />;
 }

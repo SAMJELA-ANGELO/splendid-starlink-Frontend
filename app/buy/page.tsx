@@ -33,11 +33,20 @@ export default function BuyBundle() {
   const fetchBundles = async () => {
     try {
       const response = await bundles.getAll();
-      if (response.success && response.data) {
+      // Backend returns either array directly or { success, data } format
+      if (Array.isArray(response)) {
+        setAvailableBundles(response);
+      } else if (response?.success && response?.data && Array.isArray(response.data)) {
         setAvailableBundles(response.data);
+      } else {
+        const errorMsg = response?.message || 'Failed to load bundles. Please refresh.';
+        console.error('Bundle fetch failed:', errorMsg);
+        setErrors({ general: errorMsg });
       }
-    } catch (error) {
-      setErrors({ general: 'Failed to load bundles. Please refresh.' });
+    } catch (error: any) {
+      console.error('Bundle fetch error:', error);
+      const errorMsg = error?.response?.data?.message || error.message || 'Failed to load bundles. Please refresh.';
+      setErrors({ general: errorMsg });
     }
   };
 
